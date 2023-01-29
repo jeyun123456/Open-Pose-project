@@ -1,6 +1,24 @@
-angle_combinations_joints = [[keypointsMapping[i] for i in angle_combination] for angle_combination in angle_combinations]
-print(angle_combinations_joints)
+0 1 2
+0 1 5
+1 2 3
+1 5 6
+2 3 4
+5 6 7
+1 8 9
+1 8 12
+8 9 10
+8 12 13
+9 10 11
+12 13 14
+10 11 24
+13 14 21
 
+replace values in list in angle_combinations to element of keypointsMapping
+keypointsMapping = ["Nose","Neck","RShoulder", "RElbow", "RWrist", "LShoulder", "LElbow",
+					"LWrist", "MidHip", "RHip","RKnee", "RAnkle", "LHip", "LKnee",
+					"LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe",
+					"LHeel",  "RBigToe", "RSmallToe", "RHeel"]
+angle_combinations = [[0, 1, 2], [0, 1, 5], [1, 2, 3], [1, 5, 6], [2, 3, 4], [5, 6, 7], [1, 8, 9], [1, 8, 12], [8, 9, 10], [8, 12, 13], [9, 10, 11], [12, 13, 14], [10, 11, 24], [13, 14, 21]]
 keypointsMapping = ["Nose","Neck","RShoulder", "RElbow", "RWrist", "LShoulder", "LElbow",
                     "LWrist", "MidHip", "RHip","RKnee", "RAnkle", "LHip", "LKnee",
                     "LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe",
