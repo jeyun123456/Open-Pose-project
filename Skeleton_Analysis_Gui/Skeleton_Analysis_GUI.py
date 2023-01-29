@@ -8,6 +8,8 @@ import os
 import sys
 import cv2
 import numpy as np
+import pandas as pd
+import math
 import openpyxl
 
 #endregion Import
@@ -48,7 +50,6 @@ def createDirectory(directory):
 		try:
 			if not os.path.exists(directory):
 				os.makedirs(directory)
-				#print(directory)
 		except OSError:
 			print("Error: Failed to create the directory.")
 
@@ -194,14 +195,12 @@ def processing(net, image_input, file_name):
 
 	net.setInput(inpBlob)
 	output = net.forward()
-	#print("Time Taken in forward pass = {}".format(time.time() - t))
 
 	detected_keypoints = []
 	keypoints_list = np.zeros((0,3))
 	keypoint_id = 0
 	threshold = 0.1
 
-	#print("====="+object+"=====")
 	#9-15, 20-25
 	for part in range(nPoints):
 		keypoints = []
@@ -226,7 +225,6 @@ def processing(net, image_input, file_name):
 			keypoint_id += 1
 
 		detected_keypoints.append(keypoints_with_id)
-	#print("=================")
 
 	frameClone = image_input.copy()
 	for i in range(nPoints):
@@ -254,6 +252,36 @@ def browse_file():
     file_path = filedialog.askdirectory(initialdir = "/", title = "Select folder")
     file_path_entry.delete(0, tk.END)
     file_path_entry.insert(0, file_path)
+ 
+def calculate_angle(p1, p2, p3):
+    x1, y1 = p1[0], p1[1]
+    x2, y2 = p2[0], p2[1]
+    x3, y3 = p3[0], p3[1]
+
+    dot_product = (x3 - x2) * (x2 - x1) + (y3 - y2) * (y2 - y1)
+    magnitude = math.sqrt((x3 - x2) ** 2 + (y3 - y2) ** 2) * math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    cos_theta = dot_product / magnitude
+    theta = math.acos(cos_theta)
+    theta_degrees = math.degrees(theta)
+    if math.isnan(theta_degrees):
+        theta_degrees = 90
+    return theta_degrees
+
+def Angle_get(list):
+    RHip = np.array([int(list[10].split(",")[2]), int(list[10].split(",")[3])])
+    LHip = np.array([int(list[13].split(",")[2]), int(list[13].split(",")[3])])
+    RKnee = np.array([int(list[11].split(",")[2]), int(list[11].split(",")[3])])
+    LKnee = np.array([int(list[14].split(",")[2]), int(list[14].split(",")[3])])
+    RAnkle = np.array([int(list[12].split(",")[2]), int(list[12].split(",")[3])])
+    LAnkle = np.array([int(list[15].split(",")[2]), int(list[15].split(",")[3])])
+    Angle = {"RHip-LHip-horizontal":0 ,"RHip-RKnee-RAnkle":0, "RKnee-RAnkle-vertical":0, "LHip-LKnee-LAnkle":0, "LKnee-LAnkle-vertical":0}
+    
+    Angle["RHip-LHip-horizontal"] = abs(90-calculate_angle(RHip,LHip,[LHip[0],RHip[1]]))
+    Angle["RHip-RKnee-RAnkle"] = 180-calculate_angle(RHip,RKnee,RAnkle)
+    Angle["RKnee-RAnkle-vertical"] = 180-calculate_angle(RKnee,RAnkle,[RAnkle[0],RKnee[1]])
+    Angle["LHip-LKnee-LAnkle"] = 180-calculate_angle(LHip,LKnee,LAnkle)
+    Angle["LKnee-LAnkle-vertical"] = 180-calculate_angle(LKnee,LAnkle,[LAnkle[0],LKnee[1]])
+    return Angle
 
 def Analysis():
 	if not os.path.exists(file_path_entry.get()):
@@ -262,38 +290,59 @@ def Analysis():
 		directory = file_path_entry.get()
 		file_list = [file for file in os.listdir(directory) if file.endswith(".jpg") or file.endswith(".png")]
 
-		count=0
+		resize = 1
 		progressbar.start()
 		progressbar.config(value=0, maximum=len(file_list),cursor="watch")
 
 		for img_name in file_list:
-			count +=1
-			now_file_label.config(text=img_name+"  "+str(count)+"/"+str(len(file_list)))
+			now_file_label.config(text=img_name+"  "+str(progressbar["value"]+1)+"/"+str(len(file_list)))
 			now_file_label.update()
 
 			img_path = directory+"/"+img_name
 
-			save_path = "./img_after/"+img_name[:-4]+"/"
-			save_parts = save_path+"parts/"
-
 			createDirectory("./img_after")
-			createDirectory("./csv")
-			createDirectory("./xlsx")
+			createDirectory("./csv/coord")
+			createDirectory("./csv/angle")
    
 			net = cv2.dnn.readNetFromCaffe(protoFile, weightsFile)
 
-			img = cv2.imread(img_path)
+			img = cv2.resize(cv2.imread(img_path),dsize = None, fx=resize,fy=resize)
 
 			outimg, keylist = processing(net, img, img_name)
+			angle = Angle_get(keylist)
+   
 			cv2.imwrite("./img_after/after_"+img_name, outimg)
 
-			np.savetxt("./csv/"+img_name[:-4]+"_coord.csv", keylist, fmt = "%s")
-			np.savetxt("./xlsx/"+img_name[:-4]+"_coord.xlsx", keylist, fmt = "%s")
+			np.savetxt("./csv/coord/"+img_name[:-4]+"_coord.csv", keylist, fmt = "%s")
+
+			df1 = pd.DataFrame([angle])
+			df2 = pd.DataFrame([{"name":img_name}])
+			df = pd.concat([df2,df1],axis=1)
+			df.to_csv("./csv/angle/"+img_name[:-4]+"_angle.csv", index=False)
 			progressbar.update()
-		if count==len(file_list):now_file_label.config(text="complete")
+   
+		if int(progressbar["value"])==0:now_file_label.config(text="complete")
 		progressbar["cursor"]="arrow"
 		progressbar.stop()
 
+def Csv_Merge():
+	df_list = []
+	directory = "./csv/angle/"
+	file_list = [file for file in os.listdir(directory) if file.endswith(".csv")]
+	progressbar.config(value=0, maximum=len(file_list),cursor="watch")
+	for csv_file in file_list:
+		now_file_label.config(text=csv_file+"  "+str(progressbar["value"]+1)+"/"+str(len(file_list)))
+		now_file_label.update()
+		df = pd.read_csv(directory + csv_file)
+		df_list.append(df)
+		progressbar["value"] += 1
+	if int(progressbar["value"])==(0 or 6):now_file_label.config(text="complete")
+	progressbar["cursor"]="arrow"
+	progressbar.stop()
+
+	merged_df = pd.concat(df_list)
+
+	merged_df.to_csv('Angle_merged.csv', index=False)
 
 #endregion Define
 
@@ -305,25 +354,25 @@ frame1 = tk.Frame(root)
 frame1.pack()
 
 file_path_label = tk.Label(frame1, text="File path:")
-file_path_label.grid(row = 0, rowspan=1, column=0, sticky = tk.N+tk.S)
+file_path_label.grid(row = 0, column=0)
 
-file_path_entry = tk.Entry(frame1)
-file_path_entry.grid(row = 0, rowspan=1, column=1, sticky = tk.N+tk.S)
+file_path_entry = tk.Entry(frame1, text = "/Users/isaka-lab/Desktop/CODE/Skeleton_Analysis_Gui/basic")
+file_path_entry.grid(row = 0, column=1)
 
 browse_button = tk.Button(frame1, text="Browse", command=browse_file)
 browse_button.grid(row=0, column=2)
 
-show_path_button = tk.Button(frame1, text="Analysis", command=Analysis)
-show_path_button.grid(row=1, column=2)
+analysis_button = tk.Button(frame1, text="Analysis", command=Analysis)
+analysis_button.grid(row=1, column=1)
+
+csv_merge_button = tk.Button(frame1, text="Merge Angle Csv", command=Csv_Merge)
+csv_merge_button.grid(row=1, column=2)
 
 now_file_label = tk.Label(frame1, text="File Name 0/0")
 now_file_label.grid(row=2, column=1)
 
 progressbar = ttk.Progressbar(frame1)
 progressbar.grid(row=3, column = 0, columnspan=3, sticky = tk.W+tk.E)
-
-
-
 
 #Start the Tkinter event loop with this
 frame1.mainloop()
