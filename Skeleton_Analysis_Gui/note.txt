@@ -24,3 +24,49 @@ keypointsMapping = ["Nose","Neck","RShoulder", "RElbow", "RWrist", "LShoulder", 
                     "LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe",
                     "LHeel",  "RBigToe", "RSmallToe", "RHeel"]
 angle_combinations = [[keypointsMapping[i] for i in comb] for comb in angle_combinations]
+
+
+9 12
+how to calculate angle about horizontal line with 2 coords
+θ = arctan((y2 - y1) / (x2 - x1))
+
+9 12 horizontal
+9 10 11
+12 13 14
+10 11 vertical
+13 14 vertical
+parts
+
+import math
+
+x1, y1 = 120x1, y1 = 120, 47
+x2, y2 = 100, 205
+x3, y3 = 140, 364
+
+dot_product = (x3 - x2) * (x2 - x1) + (y3 - y2) * (y2 - y1)
+magnitude = math.sqrt((x3 - x2) ** 2 + (y3 - y2) ** 2) * math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+cos_theta = dot_product / magnitude
+theta = math.acos(cos_theta)
+theta_degrees = math.degrees(theta)
+
+print(theta_degrees)x1, y1 = 120, 47
+x2, y2 = 100, 205
+x3, y3 = 140, 364
+
+dot_product = (x3 - x2) * (x2 - x1) + (y3 - y2) * (y2 - y1)
+magnitude = math.sqrt((x3 - x2) ** 2 + (y3 - y2) ** 2) * math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+cos_theta = dot_product / magnitude
+theta = math.acos(cos_theta)
+theta_degrees = math.degrees(theta)
+
+print(theta_degrees), 47
+x2, y2 = 100, 205
+x3, y3 = 140, 364
+
+dot_product = (x3 - x2) * (x2 - x1) + (y3 - y2) * (y2 - y1)
+magnitude = math.sqrt((x3 - x2) ** 2 + (y3 - y2) ** 2) * math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+cos_theta = dot_product / magnitude
+theta = math.acos(cos_theta)
+theta_degrees = math.degrees(theta)
+
+print(theta_degrees)
