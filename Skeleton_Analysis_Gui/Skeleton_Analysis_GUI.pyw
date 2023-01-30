@@ -348,7 +348,7 @@ def Analysis():
 		directory = file_path_entry.get()
 		file_list = [file for file in os.listdir(directory) if file.endswith(".jpg") or file.endswith(".png")]
 
-		resize = 1
+		resize = 10
 		progressbar.start()
 		progressbar.config(value=0, maximum=len(file_list),cursor="watch")
 
