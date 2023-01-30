@@ -6,6 +6,27 @@
 	画像を読み込み、OpenPoseを用いて関節の座標を求める。
  	各関節の座標はCSVファイルにセーブされる。
 
+
+設置
+	1．ウェブでpythonを最新バージョンで設置
+	2．ターミナルまたはコンソールを開く
+	3．requirements.txtがあるフォルダまで移動する。
+	4. pip3 install -r requirements.txt　を実行させる。
+
+
+起動方法：基本
+	1．ターミナルまたはコンソールを開く
+	2．Skeleton_Analysis_GUI.py　があるフォルダまで移動する。
+	3．python Skeleton_Analysis_GUI.py を実行する。
+
+起動方法：Windows
+	1．run_for_windows.bat　を実行する
+
+起動方法：Mac
+	1．ターミナルまたはコンソールを開く
+	2．Skeleton_Analysis_GUI.py　があるフォルダまで移動する。
+	3．python Skeleton_Analysis_GUI.py を実行する。
+
 フォルダーツリー
 	Skeleton_Analysis_GUI
 	-models 分析に必要なモデルがあるフォルダ 	
@@ -20,3 +41,4 @@
  	モデルフォルダは触らないでください。
  	必ず.pyファイルとモデルフォルダが同一フォルダに入るようにしてください。
 	画像の読み込みは.jpgか.png限定です。
+
