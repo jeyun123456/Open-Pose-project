@@ -23,9 +23,9 @@
 	1．run_for_windows.bat　を実行する
 
 起動方法：Mac
-	1．ターミナルまたはコンソールを開く
-	2．Skeleton_Analysis_GUI.py　があるフォルダまで移動する。
-	3．python Skeleton_Analysis_GUI.py を実行する。
+	1. command + spaceでterminalを検索、実行
+	2. cd を入力しpythonファイルがあるフォルダをターミナルにドラッグ&ドロップ、Enterを押す。
+	3. python Skeleton_Analysis_GUI.pywを入力、Enterを押す。
 
 フォルダーツリー
 	Skeleton_Analysis_GUI
