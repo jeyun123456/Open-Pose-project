@@ -1,3 +1,29 @@
+#region ReadMe
+# プログラム名：Skeleton_Analysis_GUI
+# 作成日付：2023.01.30
+# 作成者：Yeon Je Yun (12401908038 )
+# 説明：
+# 	画像を読み込み、OpenPoseを用いて関節の座標を求める。
+# 	各関節の座標はCSVファイルにセーブされる。
+
+# フォルダーツリー
+# 	Skeleton_Analysis_GUI
+# 	-models 分析に必要なモデルがあるフォルダ
+# 	--body_25
+# 	以下は分析を回すと自動的に生成される。
+# 	-img_after
+# 	-csv
+# 	--coord
+# 	--angle
+
+# 注意事項
+# 	モデルフォルダは触らないでください。
+# 	必ず.pyファイルとモデルフォルダが同一フォルダに入るようにしてください。
+# 	画像の読み込みは.jpgか.png限定です。
+
+#endregion ReadMe	
+
+# ライブラリーインポート
 #region Import
 import tkinter as tk
 from tkinter import filedialog
@@ -10,13 +36,14 @@ import cv2
 import numpy as np
 import pandas as pd
 import math
-import openpyxl
 
 #endregion Import
 
+# 無視してよし
 #Relative Directory Setting
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# グローバル変数の設定
 #region Keypoint setting
 protoFile = "./models/body_25/pose_deploy.prototxt"
 weightsFile = "./models/body_25/pose_iter_584000.caffemodel"
@@ -45,7 +72,11 @@ colors = [ [0,100,255], [0,100,255], [0,255,255], [0,100,255], [0,255,255], [0,1
 		[0,200,0],[0,120,200]]
 #endregion Keypoint setting
 
+# 関数の定義
 #region Define
+
+# フォルダ生成関数
+# リターンなし
 def createDirectory(directory):
 		try:
 			if not os.path.exists(directory):
@@ -53,6 +84,8 @@ def createDirectory(directory):
 		except OSError:
 			print("Error: Failed to create the directory.")
 
+# 関節に対するキーポイントリスト生成関数
+# リターン：[(X,Y,確率)]
 def getKeypoints(probMap, threshold=0.1):
 	
 	mapSmooth = cv2.GaussianBlur(probMap,(3,3),0,0)
@@ -73,6 +106,8 @@ def getKeypoints(probMap, threshold=0.1):
 		keypoints.append(maxLoc + (probMap[maxLoc[1], maxLoc[0]],))
 	return keypoints
 
+# 関節をペアで結ぶ関数
+# リターン：valid_pairs, invalid_pairs
 def getValidPairs(output,frameWidth,frameHeight,detected_keypoints):
 	valid_pairs = []
 	invalid_pairs = []
@@ -143,6 +178,8 @@ def getValidPairs(output,frameWidth,frameHeight,detected_keypoints):
 			valid_pairs.append([])
 	return valid_pairs, invalid_pairs
 
+# キーポイントを人ごとに分離する関数
+# リターン：valid_pairs, invalid_pairs
 def getPersonwiseKeypoints(valid_pairs, invalid_pairs,keypoints_list):
 	# the last number in each row is the overall score 
 	personwiseKeypoints = -1 * np.ones((0, 26))
@@ -176,6 +213,8 @@ def getPersonwiseKeypoints(valid_pairs, invalid_pairs,keypoints_list):
 					personwiseKeypoints = np.vstack([personwiseKeypoints, row])
 	return personwiseKeypoints	
 
+#イメージを入力して分析結果を出す関数
+# リターン：イメージ、キーポイントリスト
 def processing(net, image_input, file_name):
 	
 	keypoints_list_list = np.array([])
@@ -211,7 +250,12 @@ def processing(net, image_input, file_name):
 		if keypoints == []:
 				tmp = ("{},{},{},{},{}".format(file_name[:-4], keypointsMapping[part], 0,0,0))
 		else:
-			tmp = ("{},{},{},{},{}".format(file_name[:-4], keypointsMapping[part], keypoints[0][0],keypoints[0][1],keypoints[0][2]))
+			maxp = keypoints[0]
+			for p in keypoints:
+				if abs(p[0]-frameWidth/2) < abs(maxp[0]-frameWidth/2) :
+					maxp = p
+
+			tmp = ("{},{},{},{},{}".format(file_name[:-4], keypointsMapping[part], maxp[0],maxp[1],maxp[2]))
 			if keypoints[0][2] < 0:
 				keypoints = []
 				tmp = ("{},{},{},{},{}".format(file_name[:-4], keypointsMapping[part], 0,0,0))
@@ -248,11 +292,14 @@ def processing(net, image_input, file_name):
 
 	return frameClone, keypoints_list_list
 
+# フォルダー検索用関数
+# ボタンにリックされている。
 def browse_file():
     file_path = filedialog.askdirectory(initialdir = "/", title = "Select folder")
     file_path_entry.delete(0, tk.END)
     file_path_entry.insert(0, file_path)
  
+#  角度計算関数
 def calculate_angle(p1, p2, p3):
     x1, y1 = p1[0], p1[1]
     x2, y2 = p2[0], p2[1]
@@ -267,6 +314,13 @@ def calculate_angle(p1, p2, p3):
         theta_degrees = 90
     return theta_degrees
 
+# 関節の角度計算
+# 右骨盤・左骨盤・水平線
+# 右骨盤・右膝・右足首
+# 右膝・右足首・垂直線
+# 左骨盤・左膝・左足首
+# 左膝・左足首・垂直線
+# リターン：{"RHip-LHip-horizontal":0 ,"RHip-RKnee-RAnkle":0, "RKnee-RAnkle-vertical":0, "LHip-LKnee-LAnkle":0, "LKnee-LAnkle-vertical":0}
 def Angle_get(list):
     RHip = np.array([int(list[10].split(",")[2]), int(list[10].split(",")[3])])
     LHip = np.array([int(list[13].split(",")[2]), int(list[13].split(",")[3])])
@@ -283,6 +337,8 @@ def Angle_get(list):
     Angle["LKnee-LAnkle-vertical"] = 180-calculate_angle(LKnee,LAnkle,[LAnkle[0],LKnee[1]])
     return Angle
 
+# 分析ボタンにつながっている関数
+# 実際に画像を読み込み、processing関数で処理、ファイルにセーブする。
 def Analysis():
 	if not os.path.exists(file_path_entry.get()):
 		messagebox.showerror("Error", "The specified directory does not exist.")
@@ -325,6 +381,7 @@ def Analysis():
 		progressbar["cursor"]="arrow"
 		progressbar.stop()
 
+# CSVファイルを合併する関数
 def Csv_Merge():
 	df_list = []
 	directory = "./csv/angle/"
@@ -346,6 +403,7 @@ def Csv_Merge():
 
 #endregion Define
 
+# GUIの設定
 #region TK
 root = tk.Tk()
 root.title("File Browse")
