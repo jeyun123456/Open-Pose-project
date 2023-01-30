@@ -328,9 +328,12 @@ def Angle_get(list):
     LKnee = np.array([int(list[14].split(",")[2]), int(list[14].split(",")[3])])
     RAnkle = np.array([int(list[12].split(",")[2]), int(list[12].split(",")[3])])
     LAnkle = np.array([int(list[15].split(",")[2]), int(list[15].split(",")[3])])
-    Angle = {"RHip-LHip-horizontal":0 ,"RHip-RKnee-RAnkle":0, "RKnee-RAnkle-vertical":0, "LHip-LKnee-LAnkle":0, "LKnee-LAnkle-vertical":0}
+    Angle = {"RHip-LHip-horizontal":0 ,"Upper_Hip": "", "RHip-RKnee-RAnkle":0, "RKnee-RAnkle-vertical":0, "LHip-LKnee-LAnkle":0, "LKnee-LAnkle-vertical":0}
     
     Angle["RHip-LHip-horizontal"] = abs(90-calculate_angle(RHip,LHip,[LHip[0],RHip[1]]))
+    if RHip[1]<LHip[1]:Angle["Upper_Hip"]="L" 
+    elif RHip[1]>LHip[1]: Angle["Upper_Hip"]="R"
+    else : Angle["Upper_Hip"]="None"
     Angle["RHip-RKnee-RAnkle"] = 180-calculate_angle(RHip,RKnee,RAnkle)
     Angle["RKnee-RAnkle-vertical"] = 180-calculate_angle(RKnee,RAnkle,[RAnkle[0],RKnee[1]])
     Angle["LHip-LKnee-LAnkle"] = 180-calculate_angle(LHip,LKnee,LAnkle)
